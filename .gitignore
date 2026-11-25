@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Tooling
+.claude/
+CLAUDE.md
+
+# Local artifacts
+channel_budget.json
+channel_budget.md
+*.local.toml
+
+# build scratch
+PUBLISH_BLOCKED.md
+BUILD_SETUP_NEXT_STEPS.md
+.spawn.*
+.builder_*
+.build_metadata*
+.stage_*
+_build_ctx.json
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
