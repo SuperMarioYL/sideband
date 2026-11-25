@@ -12,7 +12,6 @@ from .canary import CalibrationError
 from .engine import EngineClient, EngineError
 from .measure import MeasurementError, SweepConfig, run_measurement
 from .models import ChannelBudget, DeclaredLaunchConfig
-from .replay import load as load_trace
 from .replay import replay as replay_trace
 
 app = typer.Typer(
@@ -82,8 +81,11 @@ def measure(
         return
     if trace_out is not None:
         trace.save(trace_out)
+        # The budget is written below, so its provenance records where the
+        # evidence for this run went.
+        budget.provenance.trace_path = str(trace_out)
         console.print(f"trace written to {trace_out}", style="dim")
-    _emit(budget, out, source=f"measured {endpoint}")
+    _emit(budget, out)
 
 
 @app.command()
@@ -99,18 +101,11 @@ def replay(
 ) -> None:
     """Recompute the same table from a recorded trace. No engine, no GPU, no network."""
     try:
-        trace_file = load_trace(trace)
-        if trace_file.meta.synthetic:
-            console.print(
-                "[yellow]note[/yellow] this trace is marked synthetic: its rows were "
-                "generated, not recorded from a running engine.",
-                style="dim",
-            )
-        budget = replay_trace(trace_file)
+        budget = replay_trace(trace)
     except (ValueError, MeasurementError, CalibrationError) as exc:
         _fail(str(exc))
         return
-    _emit(budget, out, source=f"replayed {trace}")
+    _emit(budget, out)
 
 
 @app.command()
@@ -153,14 +148,14 @@ def fingerprint(
         )
 
 
-def _emit(budget: ChannelBudget, out: Path, *, source: str) -> None:
+def _emit(budget: ChannelBudget, out: Path) -> None:
     console.print(report.load_name(budget), style="bold")
+    console.print(report.provenance_note(budget))
     console.print(report.table(budget))
     console.print(f"verdict: [bold]{budget.verdict.value}[/bold] — {budget.verdict_reason}")
     console.print(report.fingerprint_line(budget), style="dim")
     json_path, markdown_path = report.write(budget, out)
     console.print(f"wrote {json_path} and {markdown_path}", style="dim")
-    console.print(f"({source})", style="dim")
 
 
 def _fail(message: str) -> None:

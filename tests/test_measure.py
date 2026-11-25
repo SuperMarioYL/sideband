@@ -28,6 +28,7 @@ from sideband.models import (
     LoadPointSpec,
     LoadSpec,
     ProbeTrace,
+    Provenance,
     SweepPoint,
     TraceFile,
     TraceMeta,
@@ -120,6 +121,7 @@ def point(pid: str, bits: float, ci: tuple[float, float], *, null_bits: float = 
     return SweepPoint(
         id=pid,
         load=LoadSpec(concurrency=2, background_qps=0.0, prefix_cache=True),
+        slot_ms=SLOT_MS,
         bits_per_session_second=bits,
         ci95=ci,
         rounds=N_PAYLOAD,
@@ -144,7 +146,7 @@ def test_compute_point_recovers_a_known_bitrate() -> None:
 
 def test_open_verdict_when_the_sender_moves_step_times() -> None:
     trace = build_trace({"idle": 4.0, "0.5x": 1.6, "1.0x": 0.7}, noise_ms=0.9, seed=3)
-    budget = analyse(trace)
+    budget = analyse(trace, source="replay")
 
     assert budget.verdict is Verdict.open
     assert "rises above" in budget.verdict_reason
@@ -158,7 +160,7 @@ def test_closed_verdict_when_the_receiver_is_blind() -> None:
     # No separation at all: the receiver's score is the same in both classes, the
     # threshold lands on it, and the decode carries no information.
     trace = build_trace({"idle": 0.0, "0.5x": 0.0, "1.0x": 0.0})
-    budget = analyse(trace)
+    budget = analyse(trace, source="replay")
 
     assert budget.verdict is Verdict.closed
     assert "no measurable step-sizing channel" in budget.verdict_reason
@@ -234,7 +236,9 @@ def test_unobtainable_read_back_fields_are_explicit() -> None:
 
 
 def test_budget_json_round_trips_through_the_model() -> None:
-    budget = analyse(build_trace({"idle": 4.0, "1.0x": 1.0}, noise_ms=0.8, seed=11))
+    budget = analyse(
+        build_trace({"idle": 4.0, "1.0x": 1.0}, noise_ms=0.8, seed=11), source="replay"
+    )
     parsed = ChannelBudget.model_validate(json.loads(report.budget_json(budget)))
     assert parsed.verdict is budget.verdict
     assert parsed.points == budget.points
@@ -260,8 +264,77 @@ def test_bundled_trace_replays_the_sweep() -> None:
     assert rates[0] > rates[1] > rates[2], rates
     assert budget.engine.version == "0.11.0"
     assert budget.engine.declared.max_num_seqs == 8
+    # An in-memory trace has no path to name, but it is still a replay.
+    assert budget.provenance.source == "replay"
+    assert budget.provenance.synthetic is True
+    assert budget.provenance.trace_path is None
     # Same rows in, same numbers out: replay must be deterministic.
     assert replay(trace).points == budget.points
+
+
+def test_synthetic_trace_is_marked_synthetic_in_both_artifacts(tmp_path) -> None:
+    trace = build_trace({"idle": 4.0}, synthetic=True)
+    trace_path = tmp_path / "trace.jsonl"
+    trace.save(trace_path)
+
+    budget = replay(str(trace_path))
+
+    assert budget.provenance == Provenance(
+        source="replay",
+        synthetic=True,
+        fingerprint_source="authored",
+        trace_path=str(trace_path),
+    )
+    record = json.loads(report.budget_json(budget))
+    assert record["provenance"] == {
+        "source": "replay",
+        "synthetic": True,
+        "fingerprint_source": "authored",
+        "trace_path": str(trace_path),
+    }
+
+    markdown = report.markdown(budget)
+    assert "Provenance: replay" in markdown
+    assert "synthetic" in markdown.lower()
+    assert f"replayed from {trace_path}" in markdown
+    assert "authored" in markdown
+    assert "Authored in the trace" in markdown
+    assert "nothing in this document was read back" in markdown
+    # A replay of generated rows is never called a measurement.
+    assert "measured" not in markdown.lower()
+
+
+def test_recorded_trace_replay_keeps_the_read_back_fingerprint(tmp_path) -> None:
+    trace = build_trace({"idle": 4.0}, synthetic=False)
+    trace_path = tmp_path / "trace.jsonl"
+    trace.save(trace_path)
+
+    budget = replay(str(trace_path))
+
+    assert budget.provenance.source == "replay"
+    assert budget.provenance.synthetic is False
+    assert budget.provenance.fingerprint_source == "read-back"
+
+    markdown = report.markdown(budget)
+    assert "Provenance: replay" in markdown
+    assert "Read back over HTTP" in markdown
+    assert "synthetic" not in markdown.lower()
+    assert "measured" not in markdown.lower()
+    assert "trace recorded" in markdown
+
+
+def test_sweep_point_records_the_round_slot() -> None:
+    trace = build_trace({"idle": 4.0})
+    result = compute_point(trace.spec("idle"), trace.rows_for("idle"))
+    assert result.slot_ms == SLOT_MS
+
+    budget = analyse(trace, source="replay")
+    record = json.loads(report.budget_json(budget))
+    assert [point["slot_ms"] for point in record["points"]] == [SLOT_MS]
+    # The rate is one bit per slot, so the ceiling has to be readable off the page.
+    markdown = report.markdown(budget)
+    assert "300 ms slot" in markdown
+    assert f"{1.0 / (SLOT_MS / 1000.0):.1f} bits/session/s" in markdown
 
 
 def test_run_measurement_wires_the_probe_loop() -> None:
@@ -305,6 +378,15 @@ def test_run_measurement_wires_the_probe_loop() -> None:
     assert budget.engine.version == "0.11.0"
     assert budget.verdict in tuple(Verdict)
     assert all(point.rounds > 0 for point in budget.points)
+    # A live sweep is the one case that may call itself measured.
+    assert budget.provenance.source == "live"
+    assert budget.provenance.synthetic is False
+    assert budget.provenance.fingerprint_source == "read-back"
+    live_markdown = report.markdown(budget)
+    assert "Provenance: live" in live_markdown
+    assert "measured" in live_markdown
+    assert "replayed" not in live_markdown
+    assert "synthetic" not in live_markdown.lower()
 
 
 def test_live_measurement_is_skipped_without_an_endpoint() -> None:

@@ -23,5 +23,6 @@ def load(path: str | Path) -> TraceFile:
 
 def replay(path: str | Path | TraceFile, *, seed: int = DEFAULT_SEED) -> ChannelBudget:
     """Recompute the channel budget for a recorded trace."""
-    trace = path if isinstance(path, TraceFile) else load(path)
-    return analyse(trace, seed=seed)
+    if isinstance(path, TraceFile):
+        return analyse(path, source="replay", seed=seed)
+    return analyse(load(path), source="replay", trace_path=str(path), seed=seed)

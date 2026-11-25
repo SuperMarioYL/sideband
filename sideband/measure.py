@@ -8,8 +8,9 @@ than the live run that produced the trace.
 Per payload round the receiver contributes one decoded bit; the round's cost is
 the wall-clock slot it occupied. Throughput is therefore a ratio estimator
 ``sum(correct - wrong) / sum(slot seconds)``, and its interval comes from a
-bootstrap over rounds. Subtracting wrong bits is what gives the shuffled-label
-null an expectation of ~0: at chance, correct and wrong cancel.
+bootstrap over rounds. Subtracting wrong bits is what gives the null an
+expectation of ~0: with the ground-truth bits permuted against the decoded ones,
+correct and wrong cancel at chance.
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ from .models import (
     LoadPointSpec,
     LoadSpec,
     ProbeTrace,
+    Provenance,
     SweepPoint,
     TraceFile,
     TraceMeta,
@@ -120,6 +122,7 @@ def compute_point(
     return SweepPoint(
         id=spec.id,
         load=spec.load,
+        slot_ms=spec.slot_ms,
         bits_per_session_second=bits,
         ci95=ci95,
         rounds=len(payload),
@@ -133,9 +136,9 @@ def summarise(points: list[SweepPoint]) -> tuple[Verdict, str]:
     """Turn the table into one verdict, with the sentence a reader needs.
 
     The decision turns on one number, the *noise floor*: the upper end of the
-    shuffled-label interval, taken across load points. That control is what the
-    decoder reports when the sender's bits are unrelated to the receiver's
-    timings, so a measured bitrate has to beat it before it counts as signal.
+    shuffled-bits interval, taken across load points. That control is what the
+    decoder reports when the ground-truth bits are permuted against the receiver's
+    decoded bits, so a measured bitrate has to beat it before it counts as signal.
 
     * ``open`` — some point is above the floor *and* its interval excludes zero.
     * ``closed`` — every point sits at or below the floor: this build admits no
@@ -158,7 +161,7 @@ def summarise(points: list[SweepPoint]) -> tuple[Verdict, str]:
         return Verdict.open, (
             f"{best.bits_per_session_second:.1f} bits/session/s at {best.id} "
             f"(ci95 {best.ci95[0]:.1f}-{best.ci95[1]:.1f}) rises above the "
-            f"{noise_floor:.1f} bits/session/s shuffled-label floor; "
+            f"{noise_floor:.1f} bits/session/s shuffled-bits floor; "
             f"{len(assertive)} of {len(points)} load points read open"
         )
 
@@ -166,7 +169,7 @@ def summarise(points: list[SweepPoint]) -> tuple[Verdict, str]:
     if all(p.bits_per_session_second <= noise_floor for p in points):
         return Verdict.closed, (
             f"No load point rises above the {noise_floor:.1f} bits/session/s "
-            f"shuffled-label floor (best {best.bits_per_session_second:.1f} at {best.id}); "
+            f"shuffled-bits floor (best {best.bits_per_session_second:.1f} at {best.id}); "
             "this build admits no measurable step-sizing channel at the tested loads"
         )
     return Verdict.inconclusive, (
@@ -176,8 +179,19 @@ def summarise(points: list[SweepPoint]) -> tuple[Verdict, str]:
     )
 
 
-def analyse(trace: TraceFile, *, seed: int = DEFAULT_SEED) -> ChannelBudget:
-    """Compute the budget for a trace: the same call replay and live runs share."""
+def analyse(
+    trace: TraceFile,
+    *,
+    source: Literal["live", "replay"],
+    trace_path: str | None = None,
+    seed: int = DEFAULT_SEED,
+) -> ChannelBudget:
+    """Compute the budget for a trace: the same call replay and live runs share.
+
+    ``source`` has no default on purpose: a budget has to state whether this
+    process drove the probes or re-read them from a file, and a trace marked
+    synthetic carries a fingerprint that was authored, not read back.
+    """
     points = [
         compute_point(trace.spec(spec.id), trace.rows_for(spec.id), seed=seed)
         for spec in trace.meta.points
@@ -189,6 +203,14 @@ def analyse(trace: TraceFile, *, seed: int = DEFAULT_SEED) -> ChannelBudget:
         null_baseline=float(np.mean([p.null_bits_per_session_second for p in points])),
     )
     return ChannelBudget(
+        provenance=Provenance(
+            source=source,
+            synthetic=trace.meta.synthetic,
+            # Generated rows come with a generated fingerprint: neither was read
+            # off an engine.
+            fingerprint_source="authored" if trace.meta.synthetic else "read-back",
+            trace_path=trace_path,
+        ),
         engine=trace.meta.engine,
         channel=channel,
         points=points,
@@ -241,7 +263,7 @@ def run_measurement(
     for spec in points:
         rows.extend(probe_point(client, model, spec, config))
     trace = TraceFile(meta=TraceMeta(engine=engine, points=points), rows=rows)
-    return trace, analyse(trace, seed=config.seed)
+    return trace, analyse(trace, source="live", seed=config.seed)
 
 
 def probe_point(

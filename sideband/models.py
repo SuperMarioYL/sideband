@@ -96,7 +96,9 @@ class ChannelSummary(BaseModel):
     rounds: int = Field(ge=0, description="payload rounds decoded across all load points")
     decode_errors: int = Field(ge=0, description="payload rounds whose bit decoded wrong")
     null_baseline: float = Field(
-        description="mean bits/session/s with the sender/receiver labels shuffled"
+        description="mean bits/session/s when the ground-truth bit array is permuted across "
+        "rounds and held against the receiver's decoded bits: the decode is unchanged, only "
+        "the bit-to-round pairing is broken, so a receiver reading at chance lands near zero"
     )
 
 
@@ -105,6 +107,7 @@ class SweepPoint(BaseModel):
 
     id: str = Field(description="load point label, e.g. idle / 0.5x / 1.0x")
     load: LoadSpec
+    slot_ms: float = Field(gt=0.0, description="wall-clock round duration the bitrate divides by")
     bits_per_session_second: float
     ci95: tuple[float, float]
     rounds: int = Field(ge=0)
@@ -113,16 +116,44 @@ class SweepPoint(BaseModel):
     null_ci95: tuple[float, float]
 
 
+class Provenance(BaseModel):
+    """Where a budget's inputs came from, so a claim cannot pass for a live reading.
+
+    ``source`` says whether this process drove the probes (``live``) or recomputed
+    them from a trace (``replay``). ``synthetic`` says whether the rows were
+    generated rather than recorded, and ``fingerprint_source`` follows from it: an
+    authored trace's engine fields were written alongside the generated rows, so
+    they were never read back from ``/version``, ``/v1/models`` or ``/metrics``.
+    """
+
+    source: Literal["live", "replay"]
+    synthetic: bool = Field(
+        description="true when the probe rows were generated, not recorded from a running engine"
+    )
+    fingerprint_source: Literal["read-back", "authored"] = Field(
+        description="read-back: served by the engine's HTTP surface; "
+        "authored: written into the trace, never read from an engine"
+    )
+    trace_path: str | None = Field(
+        default=None, description="trace file these numbers came from, when there is one"
+    )
+
+
 class ChannelBudget(BaseModel):
     """A machine-checkable record of how much cross-session bandwidth a build admits."""
 
+    provenance: Provenance
     engine: EngineFingerprint
     channel: ChannelSummary
     points: list[SweepPoint]
     verdict: Verdict
     verdict_reason: str
     sideband_version: str = __version__
-    measured_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    measured_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="when the probes ran: this run for a live sweep, the trace's created_at "
+        "for a replay",
+    )
 
 
 class ProbeTrace(BaseModel):
