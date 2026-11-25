@@ -1,0 +1,38 @@
+{
+  "mode": "custom",
+  "id": "5660e6-a46ae7-acccf6-87d381af0c00",
+  "identity": "https://github.com/supermarioyl/sideband",
+  "primary": "#5660e6",
+  "secondary": "#a46ae7",
+  "highlight": "#acccf6",
+  "dark": {
+    "bg": "#050712",
+    "panel": "#0c101f",
+    "code": "#0a0d1d",
+    "ink": "#eef5fd",
+    "muted": "#959ec4",
+    "line": "#171b41",
+    "primary": "#666fe8",
+    "secondary": "#a46ae7",
+    "highlight": "#acccf6",
+    "accent": "#666fe8",
+    "buttonStart": "#5660e6",
+    "buttonEnd": "#915dcc",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#f9f9fe",
+    "panel": "#f7f7fe",
+    "code": "#f3f4fd",
+    "ink": "#131730",
+    "muted": "#556088",
+    "line": "#cbcef7",
+    "primary": "#5660e6",
+    "secondary": "#8958c1",
+    "highlight": "#607189",
+    "accent": "#5660e6",
+    "buttonStart": "#5660e6",
+    "buttonEnd": "#915dcc",
+    "buttonText": "#ffffff"
+  }
+}

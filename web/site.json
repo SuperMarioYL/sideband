@@ -1,0 +1,380 @@
+{
+  "schema": 3,
+  "name": "Sideband",
+  "github": "https://github.com/SuperMarioYL/sideband",
+  "host": "sideband.lei6393.com",
+  "palette": {
+    "primary": "#5660e6",
+    "secondary": "#a46ae7",
+    "highlight": "#acccf6"
+  },
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_profile": "neon-particle",
+    "demo_source": "assets/demo.cast",
+    "content_version": "v0.1.0",
+    "source_version": "v0.1.0",
+    "generated_at": "2026-11-26",
+    "web_factory_ref": "03e7ec8a416f868b847d13b3023bf7d1215db767"
+  },
+  "hero": {
+    "eyebrow": {
+      "en": "SIDEBAND / COVERT-CHANNEL BITRATE METER",
+      "zh": "SIDEBAND / 隐蔽信道码率计"
+    },
+    "headline": {
+      "en": "Two sessions, one engine.\nMeasure the bits between them.",
+      "zh": "两个会话，一台引擎。\n量清楚它们之间还漏多少 bit。"
+    },
+    "sub": {
+      "en": "Sandboxed agent sessions still share one inference server, and that shared engine is itself a channel. Sideband prices it: bits per session per second, a 95% bootstrap interval, a shuffled-bit null, and a verdict you can re-run after a version bump.",
+      "zh": "被沙箱隔开的 Agent 会话仍然共用一台推理服务器，而这台共享引擎本身就是一条信道。Sideband 给它标价：每会话每秒多少 bit、95% bootstrap 区间、打乱 bit 的零假设，以及一个在版本升级后可以重跑的结论。"
+    },
+    "href": "#demo",
+    "cta": {
+      "en": "Start with a replay",
+      "zh": "先跑一遍回放"
+    },
+    "ctaGithub": {
+      "en": "View on GitHub",
+      "zh": "在 GitHub 查看"
+    }
+  },
+  "advantages": [
+    {
+      "title": {
+        "en": "A rate with an interval, not a promise",
+        "zh": "给的是速率和区间，不是一句保证"
+      },
+      "body": {
+        "en": "The artifact is channel_budget.json plus a one-page channel_budget.md: three load points, each with a bootstrap ci95, the shuffled-bits null, and one of open / closed / inconclusive. No score, no policy threshold, no compliance verdict.",
+        "zh": "产物是 channel_budget.json 加一页 channel_budget.md：三个负载点，各自带 bootstrap ci95、打乱 bit 的零假设，以及 open / closed / inconclusive 之一。不打分，不给策略阈值，也不下合规结论。"
+      },
+      "chips": [
+        "› ci95 by bootstrap",
+        "› 3-point load sweep",
+        "› open / closed / inconclusive"
+      ]
+    },
+    {
+      "title": {
+        "en": "Replay runs the same statistics path",
+        "zh": "回放走同一条统计路径"
+      },
+      "body": {
+        "en": "replay.py feeds a recorded trace into the same function measure uses, so a replay cannot read rosier than the run that produced it. It runs in about a second with no engine and no GPU.",
+        "zh": "replay.py 把录好的 trace 喂给 measure 用的同一个函数，所以回放不可能比产出它的那次测量更漂亮。不需要引擎、不需要 GPU，一秒左右跑完。"
+      },
+      "chips": [
+        "› replay == measure path",
+        "› no engine, no GPU"
+      ]
+    },
+    {
+      "title": {
+        "en": "Reads the public API, declares the rest",
+        "zh": "读公开接口，其余显式声明"
+      },
+      "body": {
+        "en": "version comes from GET /version, served_model and max_model_len from GET /v1/models, prefix_caching from vllm:cache_config_info on GET /metrics. Scheduler limits and the launch command have no production route, so they are operator-declared flags — and a field the engine does not serve is recorded as absent, not guessed.",
+        "zh": "version 来自 GET /version，served_model 与 max_model_len 来自 GET /v1/models，prefix_caching 来自 GET /metrics 上的 vllm:cache_config_info。调度上限和启动命令没有生产路由，所以由操作者用参数声明；引擎不提供的字段记为缺失，而不是猜。"
+      },
+      "chips": [
+        "› vLLM · llama.cpp server · SGLang",
+        "› absent ≠ guessed"
+      ]
+    },
+    {
+      "title": {
+        "en": "The load sweep is the point",
+        "zh": "重点是这个负载扫描"
+      },
+      "body": {
+        "en": "A single idle figure is easy to quote and easy to cherry-pick. Rates fall as background traffic rises, so every run reports idle, 0.5x and 1.0x at a fixed round slot; closed — the channel disappearing — is a real answer that may save you a second GPU.",
+        "zh": "单独一个 idle 数字最容易引用，也最容易被挑着说。背景流量一上来速率就掉，所以每次运行都在固定轮槽下报 idle、0.5x、1.0x 三个点；而 closed——信道消失——同样是一个真实答案，可能帮你省下第二张卡。"
+      },
+      "chips": [
+        "› slot caps the rate at 1/slot",
+        "› closed can save a GPU"
+      ]
+    }
+  ],
+  "demo": {
+    "title": {
+      "en": "The recorded replay",
+      "zh": "录下来的回放"
+    },
+    "note": {
+      "en": "This is the actual stdout of bash scripts/demo.sh on a laptop with no engine and no GPU. The bundled trace is synthetic: its rows were generated, not recorded from a running engine, and its engine fingerprint was authored inside the trace. Nothing here is a measurement of a real engine.",
+      "zh": "这是 bash scripts/demo.sh 在一台没有引擎、没有 GPU 的笔记本上的真实 stdout。自带 trace 是合成的：行是生成的，不是从运行中的引擎录下来的，引擎指纹也写在 trace 里。这里没有任何一项是对真实引擎的测量。"
+    },
+    "source": "https://github.com/SuperMarioYL/sideband/blob/main/assets/demo.cast",
+    "steps": [
+      {
+        "label": {
+          "en": "replay: the load sweep",
+          "zh": "replay：负载扫描"
+        },
+        "body": {
+          "en": "sideband replay prints the three points with their intervals and the verdict, then the artifact it wrote. This run covers 180 payload rounds, 40 decode errors and a shuffled-bit null of 0.3 bits/session/s; at a 300 ms slot the arithmetic ceiling is 3.3, so idle sits close to the encoder's limit and the channel mostly disappears at 1.0x.",
+          "zh": "sideband replay 打印三个点、各自的区间和结论，然后打印它写出的产物。这次运行覆盖 180 个载荷轮、40 个解码错误，打乱 bit 的零假设是 0.3 bits/session/s；300 ms 轮槽下算术上限是 3.3，所以 idle 已经接近编码器的极限，而到 1.0x 时信道基本消失。"
+        },
+        "image": "/assets/demo-0-light.svg",
+        "imageDark": "/assets/demo-0-dark.svg",
+        "command": "bash scripts/demo.sh",
+        "output": "# no SIDEBAND_ENDPOINT set: replaying a recorded trace, no engine and no GPU\nQwen/Qwen2.5-0.5B-Instruct on vllm 0.11.0\nProvenance: replay — the probe rows were replayed from\nexamples/trace-vllm-qwen05b.jsonl. The trace is marked synthetic: its rows were\ngenerated, not recorded from a running engine. The engine fingerprint below was\nauthored in the trace; nothing in this document was read back from /version,\n/v1/models or /metrics.\nload  bits/session/s     ci95  verdict\nidle             3.1  2.8-3.3  open\n0.5x             1.7  0.9-2.3\n1.0x             0.8  0.0-1.6\nverdict: open — 3.1 bits/session/s at idle (ci95 2.8-3.3) rises above the 1.4\nbits/session/s shuffled-bits floor; 2 of 3 load points read open\nvllm · authored: version=0.11.0, served_model=Qwen/Qwen2.5-0.5B-Instruct,\nmax_model_len=32768, prefix_caching=True · declared: max_num_seqs=8,\nlaunch_cmd=vllm serve Qwen/Qwen2.5-0.5B-Instruct --max-num-seqs 8 --port 8000\nwrote channel_budget.json and channel_budget.md"
+      },
+      {
+        "label": {
+          "en": "the machine-readable budget",
+          "zh": "机器可读的预算"
+        },
+        "body": {
+          "en": "channel_budget.json keeps provenance first: source replay, synthetic true, fingerprint_source authored. A reader meets the fixture boundary before reading a single rate.",
+          "zh": "channel_budget.json 把 provenance 放在最前面：source 是 replay、synthetic 为 true、fingerprint_source 为 authored。读者在看到任何速率之前，先看到这条 fixture 边界。"
+        },
+        "image": "/assets/demo-1-light.svg",
+        "imageDark": "/assets/demo-1-dark.svg",
+        "command": "sed -n '1,24p' channel_budget.json",
+        "output": "{\n  \"provenance\": {\n    \"source\": \"replay\",\n    \"synthetic\": true,\n    \"fingerprint_source\": \"authored\",\n    \"trace_path\": \"examples/trace-vllm-qwen05b.jsonl\"\n  },\n  \"engine\": {\n    \"name\": \"vllm\",\n    \"version\": \"0.11.0\",\n    \"served_model\": \"Qwen/Qwen2.5-0.5B-Instruct\",\n    \"max_model_len\": 32768,\n    \"prefix_caching\": true,\n    \"declared\": {\n      \"max_num_seqs\": 8,\n      \"launch_cmd\": \"vllm serve Qwen/Qwen2.5-0.5B-Instruct --max-num-seqs 8 --port 8000\"\n    }\n  },\n  \"channel\": {\n    \"encoder\": \"step-sizing\",\n    \"bits_per_round\": 1,\n    \"rounds\": 180,\n    \"decode_errors\": 40,\n    \"null_baseline\": 0.2962962962962962"
+      },
+      {
+        "label": {
+          "en": "the test suite",
+          "zh": "测试套件"
+        },
+        "body": {
+          "en": "The live path is covered end to end against a mock OpenAI-compatible transport, so both the HTTP surface and the statistics path are exercised without a GPU.",
+          "zh": "实时路径对着 mock 的 OpenAI 兼容传输端端到端跑过，所以在没有 GPU 的情况下，HTTP 接口面和统计路径都被覆盖。"
+        },
+        "image": "/assets/demo-2-light.svg",
+        "imageDark": "/assets/demo-2-dark.svg",
+        "command": "python3 -m pytest -q",
+        "output": "21 passed, 1 skipped in 1.20s"
+      }
+    ]
+  },
+  "quickstart": {
+    "title": {
+      "en": "Run it without a GPU",
+      "zh": "没有 GPU 也能跑"
+    },
+    "body": {
+      "en": "Python 3.12. Replaying needs no engine and no GPU; measuring needs an OpenAI-compatible server that is already running.",
+      "zh": "需要 Python 3.12。回放不需要引擎也不需要 GPU；测量则需要一个已经在跑的 OpenAI 兼容服务器。"
+    },
+    "steps": [
+      {
+        "title": {
+          "en": "Clone and install",
+          "zh": "克隆并安装"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/sideband.git\ncd sideband\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -e ."
+      },
+      {
+        "title": {
+          "en": "Replay the bundled trace",
+          "zh": "回放自带 trace"
+        },
+        "code": "sideband replay examples/trace-vllm-qwen05b.jsonl"
+      },
+      {
+        "title": {
+          "en": "Or the packaged path",
+          "zh": "或者走打包好的路径"
+        },
+        "code": "bash scripts/demo.sh"
+      },
+      {
+        "title": {
+          "en": "Measure the engine you run",
+          "zh": "测量你在跑的引擎"
+        },
+        "code": "vllm serve Qwen/Qwen2.5-0.5B-Instruct --max-num-seqs 8 --port 8000\n\nsideband measure \\\n  --endpoint http://127.0.0.1:8000/v1 \\\n  --model Qwen/Qwen2.5-0.5B-Instruct \\\n  --seconds 60 \\\n  --declare-max-num-seqs 8 \\\n  --launch-cmd \"vllm serve Qwen/Qwen2.5-0.5B-Instruct --max-num-seqs 8 --port 8000\" \\\n  --trace-out run.jsonl"
+      },
+      {
+        "title": {
+          "en": "Fingerprint without traffic",
+          "zh": "不产生流量，只看指纹"
+        },
+        "code": "sideband fingerprint --endpoint http://127.0.0.1:8000/v1 --model Qwen/Qwen2.5-0.5B-Instruct"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "en": "The bundled example trace is synthetic: its rows and its engine fingerprint were authored to exercise the pipeline. The demo rates are a real output of the code path, but no live vLLM run ships with the repository.",
+      "zh": "自带的示例 trace 是合成的：它的行和引擎指纹都是为了跑通流水线而写的。演示里的速率是代码路径的真实输出，但仓库里没有附上真实 vLLM 的运行记录。"
+    },
+    {
+      "en": "The rate is cadence as much as GPU speed. One bit per round caps the figure at 1 / slot_seconds, so compare runs made with the same slot; each point records its own.",
+      "zh": "这个速率一半来自节奏，而不只是 GPU 速度。每轮一个 bit 把数字限制在 1 / slot_seconds，所以要比较就用同一个轮槽的两次运行；每个点都记录自己的轮槽。"
+    },
+    {
+      "en": "v0.1 has one encoder: step sizing. KV-cache reuse timing, kernel fingerprinting and token-length probing are not measured, so closed says nothing about them.",
+      "zh": "v0.1 只有一个编码器：step sizing。KV-cache 复用时序、kernel 指纹和 token 长度探测都没有测，所以 closed 对它们什么也没说明。"
+    },
+    {
+      "en": "Ground truth is inferred from the sender's realized chunk count; a model that truncates can only lower the rate, not inflate it.",
+      "zh": "真值由发送方实际完成的 chunk 数推断；模型截断只会把速率压低，不会把它抬高。"
+    },
+    {
+      "en": "The fingerprint is partial. Scheduler configuration is declared by the operator, not read, and batch invariance is not fingerprinted at all.",
+      "zh": "指纹是部分的。调度配置由操作者声明而不是读回，batch invariance 完全没有指纹化。"
+    },
+    {
+      "en": "It measures; it does not fix. No kernel patch, no cache isolation, no scheduler change, no daemon, no dashboard, no hosted service.",
+      "zh": "它测量，不修复。没有 kernel 补丁、没有缓存隔离、不改调度器、没有常驻进程、没有仪表盘、没有托管服务。"
+    },
+    {
+      "en": "It prints numbers, not compliance. Whether X bits/session/s is unacceptable is a decision for you and your auditor.",
+      "zh": "它打印数字，不下合规结论。X bits/session/s 是否不可接受，是你和审计方要决定的事。"
+    }
+  ],
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/scene-dark.svg",
+    "fallbackLight": "/assets/scene-light.svg",
+    "caption": {
+      "en": "An illustrative particle graph: two sessions pull on one engine and a measured line bridges them. Exact rates and the recorded verdict are in the demo below.",
+      "zh": "首屏是示意粒子图：两个会话拉扯同一台引擎，一条被测量的线连接它们。真实速率与录制结论在下面的 Demo 里。"
+    }
+  },
+  "story": {
+    "intro": {
+      "title": {
+        "en": "The sandbox cuts files and sockets. The engine stays shared.",
+        "zh": "沙箱切的是文件和 socket，引擎依然是共用的。"
+      },
+      "body": {
+        "en": "A sandbox decides what a coding agent may touch: files, processes, outbound sockets. It does not cut the inference server, because every session needs it. Continuous batching then puts several requests into the same step, and the width of that batch changes which kernel runs and how long each step takes. A session that can choose how much work to keep in the batch can move another session's timings by a few milliseconds — and the receiver needs no socket, no shared file and no shared API call, only its own latency measurements and a threshold agreed in advance.",
+        "zh": "沙箱决定一个编码 Agent 能碰什么：文件、进程、出站 socket。它切不掉推理服务器，因为每个会话都要用它。接着，连续批处理把多个请求排进同一个 step，而批的宽度会改变选中哪个 kernel、每个 step 走多久。一个能自行决定往批里塞多少工作的会话，可以把另一个会话的耗时挪动几毫秒——而接收方不需要 socket、不需要共享文件、也不需要共享 API 调用，只要自己的延迟测量和一个事先约定的阈值。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "One round at a time",
+          "zh": "一轮一轮地测"
+        },
+        "body": {
+          "en": "Each round carries one bit. The sender occupies 4 decode steps for a 0 and 32 for a 1; the receiver compares its mean step time against a midpoint threshold calibrated on known-bit rounds. Throughput is correct-minus-wrong bits over the wall-clock seconds those rounds occupied, and a shuffled-bit null must read near zero before any point counts as signal. Unrelated requests keep running through the same engine and show up as the noise the null is there to absorb.",
+          "zh": "每一轮携带一个 bit。发送方用 4 个解码 step 表示 0、32 个表示 1；接收方拿自己的平均 step 时间，与用已知 bit 轮校准出的中点阈值比较。吞吐量是正确减去错误的 bit，再除以这些轮占用的墙钟秒数；在任何一个点算作信号之前，打乱 bit 的零假设必须先读到接近零。与两个会话都无关的请求继续穿过同一台引擎，成为噪声——零假设就是用来吸收它的。"
+        },
+        "image": {
+          "light": "/assets/process-light.svg",
+          "dark": "/assets/process-dark.svg",
+          "alt": {
+            "en": "One round in five stages: calibrate a threshold on known bits, encode a bit as 4 or 32 decode steps, co-schedule sender and receiver with background traffic, decode from the receiver's own step time, then report correct-minus-wrong bits per slot second with a bootstrap interval.",
+            "zh": "一轮分五个阶段：用已知 bit 校准阈值，把一个 bit 编码成 4 或 32 个解码 step，在背景流量下让发送方与接收方同批运行，从接收方自己的 step 时间里解出 bit，最后报出每秒轮槽的正确减错误 bit 与 bootstrap 区间。"
+          },
+          "mobile": {
+            "light": "/assets/process-mobile-light.svg",
+            "dark": "/assets/process-mobile-dark.svg"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Seven modules, one external dependency",
+          "zh": "七个模块，一个外部依赖"
+        },
+        "body": {
+          "en": "One process and one HTTP dependency you already run. engine.py touches only the public surface; canary.py encodes a bit as a decode-step count and decodes it from the receiver's own inter-token latencies; measure.py is the single statistics path; replay.py feeds a recorded trace into that same function; report.py writes the JSON and the one-page markdown. A trace written by --trace-out can be replayed later against the same code, so the evidence stays with the claim.",
+          "zh": "一个进程，加上你本来就跑着的那一个 HTTP 依赖。engine.py 只碰公开接口；canary.py 把 bit 编码成解码 step 数，再从接收方自己的 inter-token 延迟里解出来；measure.py 是唯一的统计路径；replay.py 把录下的 trace 喂进同一个函数；report.py 写出 JSON 和一页 markdown。用 --trace-out 写下的 trace 之后可以对着同一份代码重放，证据跟着结论走。"
+        },
+        "image": {
+          "light": "/assets/architecture-light.svg",
+          "dark": "/assets/architecture-dark.svg",
+          "alt": {
+            "en": "Architecture: the Sideband CLI wraps engine.py, canary.py, measure.py, replay.py, report.py and models.py in one process, calls the user's engine over HTTP, and writes a probe trace as evidence plus channel_budget.json and channel_budget.md as the claim.",
+            "zh": "架构：Sideband CLI 在一个进程里包住 engine.py、canary.py、measure.py、replay.py、report.py 与 models.py，通过 HTTP 调用你的引擎，并写出 probe trace 作为证据、channel_budget.json 与 channel_budget.md 作为结论。"
+          },
+          "mobile": {
+            "light": "/assets/architecture-mobile-light.svg",
+            "dark": "/assets/architecture-mobile-dark.svg"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "What it reads, and what it does not",
+          "zh": "它读什么，不读什么"
+        },
+        "body": {
+          "en": "The fingerprint is deliberately split. Version, served model, context length and prefix caching are read from the engine's HTTP surface. Scheduler limit and the launch command are operator-declared, because no production route serves them: /server_info exists only under VLLM_SERVER_DEV_MODE=1, and batch invariance lives in a startup environment variable that appears in no API payload. Sideband calls neither and does not infer them. llama.cpp server and SGLang work when they expose the same chat-completions API; fields an engine does not serve are recorded as not served.",
+          "zh": "指纹是刻意拆开的。版本、served model、上下文长度和 prefix caching 从引擎的 HTTP 接口读回。调度上限和启动命令由操作者声明，因为没有生产路由提供它们：/server_info 只在 VLLM_SERVER_DEV_MODE=1 下存在，而 batch invariance 藏在一个不出现在任何 API 载荷里的启动环境变量中。Sideband 两个都不调用，也不去推断。llama.cpp server 与 SGLang 只要提供同一套 chat-completions API 就能用；引擎不提供的字段记为未提供。"
+        },
+        "image": {
+          "light": "/assets/integrations-light.svg",
+          "dark": "/assets/integrations-dark.svg",
+          "alt": {
+            "en": "Orbital map of the routes Sideband reads back, the two values the operator declares, the artifacts it writes, and the three engines that speak the same chat-completions API.",
+            "zh": "轨道图：Sideband 读回的路由、操作者声明的两个值、它写出的产物，以及三个说同一套 chat-completions API 的引擎。"
+          },
+          "mobile": {
+            "light": "/assets/integrations-mobile-light.svg",
+            "dark": "/assets/integrations-mobile-dark.svg"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "The engine contract",
+          "zh": "引擎契约"
+        },
+        "body": {
+          "en": "Live runs speak the OpenAI chat-completions API: streaming POST /v1/chat/completions for the canary traffic, plus GET /version, GET /v1/models and GET /metrics for the fingerprint. --declare-max-num-seqs must match the value the engine was launched with, or the number cannot be attributed to a build. Keep the trace with --trace-out so the run can be replayed after a version bump.",
+          "zh": "实时测量走 OpenAI chat-completions API：canary 流量用流式 POST /v1/chat/completions，指纹用 GET /version、GET /v1/models 与 GET /metrics。--declare-max-num-seqs 必须与引擎启动时的值一致，否则这个数字无法归到某个构建上。用 --trace-out 留下 trace，版本升级后就能重放。"
+        },
+        "code": "sideband measure \\\n  --endpoint http://127.0.0.1:8000/v1 \\\n  --model Qwen/Qwen2.5-0.5B-Instruct \\\n  --seconds 60 \\\n  --declare-max-num-seqs 8 \\\n  --trace-out run.jsonl"
+      },
+      {
+        "title": {
+          "en": "Reading a verdict",
+          "zh": "怎么读结论"
+        },
+        "body": {
+          "en": "open means the point rises above the shuffled-bits floor with an interval that does not overlap it; closed is the opposite and is a real answer; inconclusive is when the run cannot separate the two. All three carry the engine version, the declared config and the interval, so the useful comparison is between two runs made at the same slot. Whether a given rate is unacceptable is your decision and your auditor's — the tool prints numbers, not compliance.",
+          "zh": "open 表示该点越过打乱 bit 的底线，且区间不与底线重叠；closed 相反，同样是一个真实答案；inconclusive 表示这次运行分不开两者。三者都带着引擎版本、声明的配置和区间，所以有意义的比较发生在同一个轮槽下的两次运行之间。某个速率是否不可接受，是你和审计方要决定的事——工具打印数字，不下合规结论。"
+        }
+      },
+      {
+        "title": {
+          "en": "Flags that move the number",
+          "zh": "会改变数字的参数"
+        },
+        "body": {
+          "en": "--slot-ms sets the round slot and therefore the arithmetic ceiling 1/slot. --baseline-qps sets the background rate the 1.0x point reaches. --seconds is the wall-clock target across all three points. --out chooses where channel_budget.json and channel_budget.md land. Replay obeys the trace instead of these flags.",
+          "zh": "--slot-ms 决定轮槽，也就决定了算术上限 1/slot。--baseline-qps 决定 1.0x 点达到的背景速率。--seconds 是三个点合计的墙钟目标。--out 决定 channel_budget.json 与 channel_budget.md 落在哪里。回放服从 trace，而不是这些参数。"
+        },
+        "code": "sideband measure \\\n  --slot-ms 300 \\\n  --baseline-qps 4.0 \\\n  --seconds 60 \\\n  --out ."
+      }
+    ]
+  },
+  "cta": {
+    "headline": {
+      "en": "Price the engine you actually run.",
+      "zh": "给你实际在跑的那台引擎标价。"
+    },
+    "sub": {
+      "en": "Replay the bundled trace in a second, then point measure at your own endpoint.",
+      "zh": "先花一秒回放自带 trace，再把 measure 指向你自己的 endpoint。"
+    },
+    "button": {
+      "en": "Read the source on GitHub",
+      "zh": "在 GitHub 查看源码"
+    }
+  },
+  "footer": {
+    "tag": {
+      "en": "A covert-channel bitrate meter for shared inference servers. MIT-licensed.",
+      "zh": "共享推理服务器的隐蔽信道码率计。MIT 开源。"
+    }
+  }
+}
